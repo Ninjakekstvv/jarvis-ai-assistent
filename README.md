@@ -177,5 +177,3 @@ Dieses Projekt befindet sich aktuell in privater Entwicklung.
 
 Eine öffentliche Lizenz wird zu einem späteren Zeitpunkt veröffentlicht.
 Dieses Projekt befindet sich aktuell in privater Entwicklung.
-
-Eine öffentliche Lizenz wird zu einem späteren Zeitpunkt veröffentlicht.
