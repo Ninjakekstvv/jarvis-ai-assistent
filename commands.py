@@ -1,5 +1,14 @@
 import datetime
+import traceback
+import threading
+import sys
+import os
+
 from ipc import send_command
+from builder.project_builder import ProjectBuilder
+
+from tasks import aufgabe_erstellen
+
 from actions import (
     open_program,
     open_website,
@@ -15,194 +24,447 @@ from actions import (
 )
 
 
+
+builder = ProjectBuilder()
+
+
+
 WEBSEITEN = {
+
     "youtube": "https://www.youtube.com",
     "google": "https://www.google.de",
     "amazon": "https://www.amazon.de",
     "chatgpt": "https://chatgpt.com",
     "github": "https://github.com",
     "tiktok": "https://www.tiktok.com",
+
 }
+
+
 
 def execute_command(befehl, sprechen):
 
     befehl = befehl.lower().strip()
+
+
 
     # ==========================
     # Begrüßung
     # ==========================
 
     if befehl == "hallo":
-        sprechen("Hallo, Master. Keine kritischen Systemfehler erkannt. Alle Systeme arbeiten innerhalb der optimalen Parameter.")
+
+        sprechen(
+            "Hallo, Master. Alle Systeme arbeiten innerhalb der optimalen Parameter."
+        )
+
         return True
+
+
 
     if "wie geht" in befehl:
-        sprechen("Ausgezeichnet, Master. Alle Systeme arbeiten innerhalb der optimalen Parameter. Meine Diagnoseroutinen empfehlen dennoch gelegentlich eine Wartung, rein vorsorglich.")
+
+        sprechen(
+            "Ausgezeichnet, Master. Systemstatus optimal."
+        )
+
         return True
 
+
+
     # ==========================
-    # Programme anzeigen
+    # Jarvis beenden
     # ==========================
+
+    if befehl in (
+
+        "jarvis beenden",
+        "jarvis ausschalten",
+        "jarvis herunterfahren",
+        "jarvis aus",
+        "beende jarvis",
+        "shutdown",
+
+    ):
+
+        sprechen(
+            "Master. Abschaltungsprotokoll wird initialisiert."
+        )
+
+        os._exit(0)
+
+
+
+    # ==========================
+    # AUFGABEN MODUL
+    # ==========================
+
+    task_trigger = (
+
+        "erstelle eine aufgabe ",
+        "erstelle aufgabe ",
+        "füge eine aufgabe hinzu ",
+        "merke dir als aufgabe ",
+        "neue aufgabe ",
+
+    )
+
+
+    if befehl.startswith(task_trigger):
+
+
+        prefix = next(
+            t for t in task_trigger
+            if befehl.startswith(t)
+        )
+
+
+        task = befehl.replace(
+            prefix,
+            ""
+        ).strip()
+
+
+
+        if not task:
+
+            sprechen(
+                "Master, welche Aufgabe soll registriert werden?"
+            )
+
+            return True
+
+
+
+        aufgabe_erstellen(
+            task
+        )
+
+
+        sprechen(
+            f"Aufgabe registriert, Master. {task} wurde im Aufgabenmodul gespeichert."
+        )
+
+
+        return True
+
+
+
+
+    # ==========================
+    # PROJEKTE ERSTELLEN
+    # ==========================
+
+
+    trigger = (
+
+        "programmiere ",
+        "entwickle ",
+        "baue ",
+        "schreibe ",
+        "generiere ",
+
+    )
+
+
+    if befehl.startswith(trigger):
+
+
+        prefix = next(
+            t for t in trigger
+            if befehl.startswith(t)
+        )
+
+
+        task = befehl.replace(
+            prefix,
+            ""
+        ).strip()
+
+
+
+        if not task:
+
+            sprechen(
+                "Master, was soll entwickelt werden?"
+            )
+
+            return True
+
+
+
+        sprechen(
+            "Master, Projektanalyse gestartet."
+        )
+
+
+        try:
+
+
+            result = builder.build(
+                task
+            )
+
+
+            sprechen(
+                "Master, Projekt wurde erfolgreich erstellt."
+            )
+
+
+            print(result)
+
+
+
+        except Exception as e:
+
+
+            print(e)
+
+
+            sprechen(
+                "Master, Projekterstellung fehlgeschlagen."
+            )
+
+
+
+        return True
+
+
+
+
+    # ==========================
+    # PROGRAMME ANZEIGEN
+    # ==========================
+
 
     if "programmliste" in befehl or "programm liste" in befehl:
 
-        if "schließ" in befehl or "schliesse" in befehl or "schließen" in befehl:
-            if send_command("CLOSE_PROGRAMS"):
-                sprechen("Master, Abschaltungsprotokoll der Systemmodule wird initialisiert.")
-            else:
-                sprechen("Master, Abschaltungsprotokoll der Systemmodule konnte nicht abgeschlossen werden.")
+
+        if "schließ" in befehl:
+
+            send_command(
+                "CLOSE_PROGRAMS"
+            )
+
+            sprechen(
+                "Systemmodule werden geschlossen, Master."
+            )
+
             return True
 
-        if "öffne" in befehl or "zeige" in befehl:
-            if send_command("SHOW_PROGRAMS"):
-                sprechen("Master, Zugriff auf Systemmodule wird initialisiert.")
-            else:
-                sprechen("Master Systemmodule reagieren nicht wie erwartet. Initialisierung abgebrochen.")
+
+
+        if "öffne" in befehl:
+
+            send_command(
+                "SHOW_PROGRAMS"
+            )
+
+            sprechen(
+                "Systemmodule werden angezeigt, Master."
+            )
+
             return True
 
+
+
+
+
     # ==========================
-    # YouTube Musik
+    # YOUTUBE
     # ==========================
 
-    if befehl.startswith("spotify spiele "):
 
-        titel = befehl.replace("spotify spiele ", "").strip()
+    if befehl.startswith(
+        (
+            "spiele ",
+            "spiel "
+        )
+    ):
 
-        sprechen(f"Zugriff auf das Wiedergabesystem Für {titel} wird initialisiert Master.")
-
-        spotify_play(titel)
-
-        return True
-
-    if befehl.startswith(("spiele ", "spiel ")):
 
         suche = (
-            befehl.replace("spiele ", "")
-                  .replace("spiel ", "")
-                  .strip()
+
+            befehl
+            .replace("spiele ", "")
+            .replace("spiel ", "")
+            .strip()
+
         )
 
-        if open_program("spotify"):
 
-           sprechen(f"Master, Initialisierung des Wiedergabesystems für {suche} Wurde Erfolgreich Initialisiert .")
-           spotify_play(suche)
+        play_youtube(
+            suche
+        )
 
-        else:
 
-            sprechen(f"Master, Initialisierung des Video-Wiedergabesystem für {suche} Wurde Erfolgreich Initialisiert.")
-            play_youtube(suche)
+        sprechen(
+            "Wiedergabesystem aktiviert, Master."
+        )
+
 
         return True
 
+
+
+
     # ==========================
-    # Öffnen / Starten
+    # ÖFFNEN
     # ==========================
 
-    if befehl.startswith(("öffne ", "starte ")):
+
+    if befehl.startswith(
+        (
+            "öffne ",
+            "starte "
+        )
+    ):
+
 
         ziel = (
-            befehl.replace("öffne ", "")
-                  .replace("starte ", "")
-                  .strip()
+
+            befehl
+            .replace("öffne ", "")
+            .replace("starte ", "")
+            .strip()
+            .replace(" ","")
+
         )
+
 
         if ziel in WEBSEITEN:
-            open_website(WEBSEITEN[ziel])
-            sprechen(f"Master, Zielsystem {ziel} konnte nicht lokalisiert werden.")
+
+
+            open_website(
+                WEBSEITEN[ziel]
+            )
+
+
+            sprechen(
+                f"{ziel} wurde geöffnet, Master."
+            )
+
+
             return True
+
+
 
         if open_program(ziel):
-            sprechen(f"Master, Zugriff auf Ortungssystem {ziel} wird initialisiert.")
+
+
+            sprechen(
+                f"{ziel} gestartet, Master."
+            )
+
+
             return True
 
-        sprechen(f"{ziel} Master, Ziel- oder Ortungssystem konnte nicht lokalisiert werden.")
-        return True
+
 
     # ==========================
-    # Programme schließen
+    # SCHLIESSEN
     # ==========================
 
-    if befehl.startswith(("schließe ", "schliesse ", "beende ")):
+
+    if befehl.startswith(
+        (
+            "schließe ",
+            "schliesse ",
+            "beende "
+        )
+    ):
+
 
         ziel = (
-            befehl.replace("schließe ", "")
-                  .replace("schliesse ", "")
-                  .replace("beende ", "")
-                  .strip()
+
+            befehl
+            .replace("schließe ","")
+            .replace("schliesse ","")
+            .replace("beende ","")
+            .strip()
+
         )
 
-        if close_program(ziel):
-            sprechen(f"{ziel} Abschaltungsprotokoll erfolgreich abgeschlossen Master.")
-        else:
-            sprechen(f"Abschaltungsprotokoll für Zielsystem {ziel} fehlgeschlagen.")
+
+        close_program(
+            ziel
+        )
+
+
+        sprechen(
+            f"{ziel} Abschaltungsprotokoll abgeschlossen."
+        )
+
 
         return True
 
+
+
+
+
     # ==========================
-    # Spotify / Mediensteuerung
+    # MEDIEN
     # ==========================
 
+
     if befehl in (
+
         "pause",
         "musik pausieren",
         "spotify pausieren",
-        "weiter",
-        "musik weiter",
-        "spotify weiter",
+
     ):
+
+
         spotify_pause()
-        sprechen("Master, Wiedergabeprotokoll angehalten.")
+
+        sprechen(
+            "Wiedergabe pausiert, Master."
+        )
+
         return True
 
+
+
     if befehl in (
+
         "nächstes lied",
         "weiteres lied",
-        "spotify nächstes lied",
+
     ):
+
+
         spotify_next()
-        sprechen("Wiedergabeprotokoll auf den nächsten Eintrag umgestellt.")
+
+        sprechen(
+            "Nächster Titel aktiviert."
+        )
+
         return True
 
-    if befehl in (
-        "vorheriges lied",
-        "letztes lied",
-        "spotify vorheriges lied",
-    ):
-        spotify_previous()
-        sprechen("Master, Wiedergabeprotokoll auf den vorherigen Eintrag zurückgesetzt.")
-        return True
 
-    if befehl in (
-        "lauter",
-        "musik lauter",
-    ):
-        volume_up()
-        sprechen("lauter: Master, Verstärkungsmodul neu kalibriert.")
-        return True
 
-    if befehl in (
-        "leiser",
-        "musik leiser",
-    ):
-        volume_down()
-        sprechen("Master, Verstärkungsmodul auf Minimalbetrieb gesetzt.")
-        return True
-
-    if befehl in (
-        "ton aus",
-        "stumm",
-    ):
-        volume_mute()
-        sprechen("Master, Akustiksubsystem in den Ruhezustand versetzt.")
-        return True
 
     # ==========================
-    # Uhrzeit
+    # UHRZEIT
     # ==========================
+
 
     if befehl == "uhrzeit":
-        zeit = datetime.datetime.now().strftime("%H:%M")
-        sprechen(f"Master, Chronometersystem synchronisiert. Aktuelle Systemzeit: {zeit} Alle zeitkritischen Routinen arbeiten innerhalb der optimalen Parameter.")
+
+
+        zeit = datetime.datetime.now().strftime(
+            "%H:%M"
+        )
+
+
+        sprechen(
+            f"Master, aktuelle Systemzeit {zeit}."
+        )
+
+
         return True
+
+
 
     return False

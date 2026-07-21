@@ -223,9 +223,11 @@ def open_website(url):
     webbrowser.open(url)
     return True
 
-
 def play_youtube(suche):
-    """Spielt Musik auf YouTube."""
+
+    pywhatkit.playonyt(suche)
+
+    return True
 
 def spotify_play(song):
     """Öffnet Spotify, sucht einen Titel und startet ihn."""

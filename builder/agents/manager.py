@@ -1,4 +1,10 @@
-from builder.agents.codex_agent import CodexAgent
+from builder.agents.architect_agent import ArchitectAgent
+from builder.agents.planner_agent import PlannerAgent
+from builder.agents.backend_agent import BackendAgent
+from builder.agents.ui_agent import UIAgent
+from builder.agents.reviewer_agent import ReviewerAgent
+from builder.agents.tester_agent import TesterAgent
+from builder.agents.fixer_agent import FixerAgent
 from builder.agents.filesystem_agent import FilesystemAgent
 
 
@@ -6,16 +12,34 @@ class AgentManager:
 
     def __init__(self):
 
-        self.coder = CodexAgent()
-        self.filesystem = FilesystemAgent()
+        self.agents = {
 
-    def build(self, task):
+            "architect": ArchitectAgent(),
 
-        project = self.coder.execute(task)
+            "planner": PlannerAgent(),
 
-        project_path = self.filesystem.execute(
-            project["project_name"],
-            project["files"]
-        )
+            "backend": BackendAgent(),
 
-        return project_path
+            "ui": UIAgent(),
+
+            "reviewer": ReviewerAgent(),
+
+            "tester": TesterAgent(),
+
+            "fixer": FixerAgent(),
+
+            "filesystem": FilesystemAgent()
+
+        }
+
+    def execute(self, agent, context):
+
+        agent = agent.lower()
+
+        if agent not in self.agents:
+
+            raise Exception(
+                f"Agent '{agent}' existiert nicht."
+            )
+
+        return self.agents[agent].execute(context)

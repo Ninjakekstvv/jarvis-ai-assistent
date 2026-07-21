@@ -6,29 +6,36 @@ from builder.agents.base_agent import BaseAgent
 class FilesystemAgent(BaseAgent):
 
     def __init__(self):
+
         super().__init__("Filesystem")
 
-    def execute(self, project_name: str, files):
+    def execute(self, context):
 
-        project_name = (
-            project_name
-            .replace(" ", "_")
-            .replace(":", "")
-            .replace("/", "")
-            .replace("\\", "")
+        project_name = context.plan.project["name"]
+
+        BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+        root.mkdir(
+            parents=True,
+            exist_ok=True
         )
 
-        project_path = Path("projects") / project_name
+        for file in context.plan.files:
 
-        project_path.mkdir(parents=True, exist_ok=True)
+            target = root / file["path"]
 
-        for file in files:
+            target.parent.mkdir(
+                parents=True,
+                exist_ok=True
+            )
 
-            path = project_path / file["path"]
+            target.write_text(
+                file["content"],
+                encoding="utf-8"
+            )
 
-            path.parent.mkdir(parents=True, exist_ok=True)
+            print("Gespeichert:", target)
 
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(file["content"])
+        context.project_path = root
 
-        return project_path
+        return context

@@ -4,14 +4,12 @@ from builder.agents.base_agent import BaseAgent
 from builder.utils.openai_client import OpenAIClient
 from builder.utils.prompt_loader import PromptLoader
 
-from builder.models.build_task import BuildTask
 
-
-class PlannerAgent(BaseAgent):
+class BackendAgent(BaseAgent):
 
     def __init__(self):
 
-        super().__init__("Planner")
+        super().__init__("Backend")
 
         self.ai = OpenAIClient()
 
@@ -19,9 +17,13 @@ class PlannerAgent(BaseAgent):
 
     def execute(self, context):
 
+        task = context.current_task
+
+        file = task.files[0]
+
         prompt = self.prompts.load(
 
-            "planner",
+            "backend",
 
             project=json.dumps(
                 context.plan.project,
@@ -33,36 +35,26 @@ class PlannerAgent(BaseAgent):
                 context.plan.tech,
                 indent=4,
                 ensure_ascii=False
-            )
+            ),
+
+            path=file.path,
+
+            description=file.description
 
         )
 
-        result = self.ai.ask_json(prompt)
+        code = self.ai.ask(prompt)
 
-        for file in result["files"]:
+        file.complete(code)
 
-            task = BuildTask(
+        context.plan.files.append({
 
-                title=file["path"],
+            "path": file.path,
 
-                description=file["description"],
+            "content": code
 
-                agent=file["agent"]
+        })
 
-            )
-
-            task.add_file(
-
-                file["path"],
-
-                file["description"]
-
-            )
-
-            context.plan.add_task(task)
-
-        context.log(
-            f"✔ {len(context.plan.tasks)} Aufgaben erstellt."
-        )
+        context.log(f"✔ {file.path}")
 
         return context

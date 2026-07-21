@@ -60,7 +60,7 @@ def befehl_ausfuehren(befehl):
         sprechen("Master, Kernsubroutinen erfolgreich geladen. Warte auf weitere Anweisungen.")
         return True
 
-    if "stop" in befehl or "standby" in befehl:
+    if "standby" in befehl:
         sprechen("Bestätigt, Master. Standby-Modus aktiviert. Systeme in Bereitschaft.")
         return False
 
